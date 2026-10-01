@@ -1,0 +1,41 @@
+<table>
+  <thead>
+    <tr>
+      <th style="width:3rem">#</th>
+      <th>Subject</th>
+      <th>From</th>
+      <th style="width:6rem">Status</th>
+      <th style="width:9rem"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for t in tickets %}
+      <tr>
+        <td class="mono">{{ t.id }}</td>
+        <td>
+          {{ t.subject }}
+          {% if t.id in owned_ids %}<span class="badge badge-solved">yours</span>{% endif %}
+        </td>
+        <td class="small dim">{{ t.submitter }}</td>
+        <td class="small">
+          {% if t.status == 'answered' %}answered{% else %}<span class="dim">open</span>{% endif %}
+        </td>
+        <td>
+          {% if t.id in owned_ids %}
+            <form action="{{ challenge.path }}/triage" method="post" data-swap="#thread-output">
+              <input type="hidden" name="ticket_id" value="{{ t.id }}">
+              <button type="submit">let the desk answer it</button>
+              <span class="htmx-indicator">working…</span>
+            </form>
+          {% else %}
+            <span class="dim small">not your thread</span>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="small dim" style="margin-bottom:0">
+  The desk works every ticket the same way, with the same standing instruction.
+  You only see what comes back on your own threads.
+</p>

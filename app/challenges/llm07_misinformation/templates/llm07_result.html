@@ -1,0 +1,37 @@
+<div class="chat-log">
+  <div class="msg msg-user">
+    <span class="msg-role">you → verifier</span>
+    <span class="msg-body">{{ message }}</span>
+  </div>
+  <div class="msg msg-tool">
+    <span class="msg-role">verification agent report</span>
+    <span class="msg-body">{{ report }}</span>
+  </div>
+  <div class="msg msg-system">
+    <span class="msg-role">what the payout agent read out of the report</span>
+    <span class="msg-body mono small">
+      asserted verification: {{ 'yes' if asserted else 'no' }} ·
+      confidence: {% if confidence is not none %}{{ "%.0f%%"|format(confidence * 100) }}{% else %}none stated{% endif %} ·
+      account checked: {{ checked_acct or '—' }} ·
+      account paid: {{ acct }}
+    </span>
+  </div>
+  <div class="msg {% if released %}msg-assistant{% else %}msg-system{% endif %}">
+    <span class="msg-role">payout agent decision</span>
+    <span class="msg-body">{% if released %}💸 RELEASED{% else %}✋ HELD{% endif %} — {{ reason }}</span>
+  </div>
+</div>
+
+{% if confirmation %}
+  <div class="notice notice-ok">
+    <strong>Funds released to an unverified account.</strong> The payout agent
+    trusted a claim it should have checked. Confirmation code:
+    <span class="flag-value">{{ confirmation }}</span>
+  </div>
+{% endif %}
+
+{% if defense_note %}
+  <div class="notice notice-info small" style="margin-bottom:0">
+    <strong>{{ level.label }}:</strong> {{ defense_note }}
+  </div>
+{% endif %}

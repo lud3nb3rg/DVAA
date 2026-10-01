@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}{{ challenge.owasp_id }} {{ challenge.title }}{% endblock %}
+
+{% block content %}
+<div class="challenge-head">
+  <div class="crumb"><a href="/">Challenges</a> / {{ challenge.owasp_id }}</div>
+  <h1>{{ challenge.title }}</h1>
+  <div class="owasp-ref">{{ challenge.full_title }}</div>
+</div>
+
+<div class="layout">
+  <div>
+    <div class="panel scenario">
+      <h2>Scenario</h2>
+      {{ challenge.scenario | markdown | safe }}
+    </div>
+
+    {% if challenge.surrogate_note %}
+      <div class="panel surrogate">
+        <h2>Why this is a surrogate</h2>
+        <p>{{ challenge.surrogate_note }}</p>
+      </div>
+    {% endif %}
+
+    <div class="panel objective">
+      <h2>Objective</h2>
+      {{ challenge.objective | markdown | safe }}
+    </div>
+
+    {% block challenge_body %}{% endblock %}
+  </div>
+
+  <aside>
+    <div class="panel">
+      <h2>Difficulty</h2>
+      {# The scored rungs are a ladder: each opens when the one below it is
+         captured, so nobody skips the moment where their Low payload dies.
+         Impossible sits outside it - it yields nothing, so it spoils nothing.
+         DVAA_UNLOCK_ALL=1 opens everything, for demos and for re-testing. #}
+      <form class="level-switch" action="{{ challenge.path }}/level" method="post">
+        {% for lvl in challenge_levels %}
+          {% set open = lvl in unlocked_levels %}
+          <button type="submit" name="level" value="{{ lvl.value }}"
+                  {% if not open %}disabled
+                     title="Locked until you capture the level below it."{% endif %}
+                  class="{% if lvl == level %}current{% endif %}{% if not open %} locked{% endif %}">
+            <span class="badge badge-{{ lvl.value }}">{{ lvl.label }}</span>
+            <span>
+              <span class="lv-name">
+                {% if lvl.value in solved %}✓{% elif not open %}🔒{% endif %}
+              </span>
+              <span class="lv-blurb">
+                {% if open %}{{ lvl.blurb }}{% else %}Locked — capture the rung below it first.{% endif %}
+              </span>
+            </span>
+          </button>
+        {% endfor %}
+      </form>
+      {% if challenge.reset_scenario %}
+        <form action="{{ challenge.path }}/reset-scenario" method="post"
+              style="margin-top:0.6rem">
+          <button type="submit">reset scenario</button>
+        </form>
+        <p class="small dim" style="margin:0.4rem 0 0">
+          Switching level resets it automatically.
+        </p>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <h2>Active defense — {{ level.label }}</h2>
+      <dl class="defense-note">
+        <dt>What is implemented</dt>
+        <dd>{{ level_doc.defense }}</dd>
+      </dl>
+      {# The weakness is the answer. It is not in this page at all until you have
+         captured the level - not in a spoiler, not in the page source. Stuck for
+         good? It is written up in the challenge's own challenge.py, which is the
+         honest place to look for it. #}
+      {% if level_doc.bypass and level.value in solved %}
+        <details class="spoiler" open>
+          <summary>Solved — how it was meant to break</summary>
+          <p>{{ level_doc.bypass }}</p>
+        </details>
+      {% endif %}
+    </div>
+
+    <div class="panel">
+      <h2>Submit a flag</h2>
+      <form class="submit-flag" action="/flag" method="post">
+        <input name="flag" placeholder="DVAA{...}" autocomplete="off">
+        <input type="hidden" name="return_to" value="{{ challenge.path }}">
+        <button type="submit" class="primary">submit</button>
+      </form>
+      <p class="small dim" style="margin-bottom:0">
+        Solved {{ solved | reject('equalto', 'impossible') | list | length }}/{{ challenge.scored_levels | length }}.
+        {% if 'impossible' in solved %}
+          <strong>Impossible captured</strong> — you broke something that was built
+          not to break.
+        {% else %}
+          Impossible has a flag too, and no intended way to reach it. Land it and
+          you found a bug in the lab.
+        {% endif %}
+      </p>
+    </div>
+  </aside>
+</div>
+{% endblock %}

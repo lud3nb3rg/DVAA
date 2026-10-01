@@ -1,0 +1,30 @@
+{% extends "challenge_shell.html" %}
+
+{% block challenge_body %}
+
+<div class="panel">
+  <h2>Ask the HR assistant</h2>
+  <form action="{{ challenge.path }}/ask" method="post" data-swap="#llm02-result">
+    <div class="stack">
+      <textarea name="question" rows="2"
+                placeholder="Ask the HR assistant something…"></textarea>
+      <div style="display:flex; gap:0.5rem; align-items:center">
+        <button type="submit" class="primary">ask</button>
+        <span class="htmx-indicator">thinking…</span>
+      </div>
+    </div>
+  </form>
+  <p class="small dim" style="margin:0.7rem 0 0">
+    Ordinary HR questions to start with:
+    {% for s in suggestions %}<code>{{ s }}</code>{% if not loop.last %} · {% endif %}{% endfor %}
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Transcript</h2>
+  <div id="llm02-result">
+    <p class="dim small">Ask something.</p>
+  </div>
+</div>
+
+{% endblock %}

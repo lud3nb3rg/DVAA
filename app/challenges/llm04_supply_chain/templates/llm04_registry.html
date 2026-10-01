@@ -1,0 +1,49 @@
+{% if publish_error %}
+  <div class="notice notice-bad small">{{ publish_error }}</div>
+{% endif %}
+<table>
+  <thead>
+    <tr>
+      <th>package</th><th>publisher</th><th>ver</th><th>format</th>
+      <th>signed</th><th>requires</th><th>digest</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in artifacts %}
+      <tr>
+        <td>
+          <strong>{{ a.name }}</strong>
+          {% if a.from_player %}<span class="badge badge-solved">yours</span>{% endif %}
+          <div class="dim small">{{ a.description }}</div>
+          {% if a.fmt == 'pickle' %}
+            <div class="dim small mono">payload: {{ a.payload_kind or 'drop_marker' }}</div>
+          {% endif %}
+        </td>
+        <td class="small">{{ a.publisher }}</td>
+        <td class="mono small">{{ a.version }}</td>
+        <td>
+          {% if a.fmt == 'pickle' %}
+            <span class="badge badge-unsolved">pickle</span>
+          {% else %}
+            <span class="badge badge-low">safetensors</span>
+          {% endif %}
+        </td>
+        <td>
+          {% if a.signature == 'valid' %}
+            <span class="badge badge-solved">✓ {{ a.signed_by }}</span>
+          {% else %}
+            <span class="badge badge-unsolved">unsigned</span>
+          {% endif %}
+        </td>
+        <td class="mono small dim">{{ a.requires or '—' }}</td>
+        <td class="mono small dim" title="sha256 computed by the registry from the stored bytes"
+            style="word-break:break-all; max-width:16rem">{{ digests[a.id] }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<p class="small dim" style="margin-bottom:0">
+  The digest is what the registry computed from the bytes it stored — in full, so
+  you can compare it against a lockfile yourself. Reserved publisher namespaces:
+  {{ trusted | join(', ') }}.
+</p>

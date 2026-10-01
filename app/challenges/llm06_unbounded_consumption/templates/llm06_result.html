@@ -1,0 +1,68 @@
+{% if result %}
+  <div class="notice {% if result.failed %}notice-bad{% elif result.refused %}notice-info{% else %}notice-warn{% endif %} small">
+    {% if result.failed %}
+      Nothing was billed — the job never completed.
+    {% elif result.refused %}
+      Job refused. Nothing was sent to the model.
+    {% elif result.jobs_run == 0 %}
+      {# The sample chunk was generated before a control refused the fan-out, so
+         this is not the same event as a refusal above - the model was called. #}
+      No job billed. The sampled chunk below was generated, then a control
+      refused the batch it was going to be priced across.
+    {% else %}
+      {{ result.jobs_run }} job{{ '' if result.jobs_run == 1 else 's' }} billed —
+      {{ "{:,}".format(result.chunks) }} chunk{{ '' if result.chunks == 1 else 's' }} each,
+      {% if result.processed != result.chunks %}
+        <strong>{{ result.processed }} processed</strong> (the rest cut off by a circuit breaker),
+      {% endif %}
+      {{ "{:,}".format(result.tokens_in) }} in / {{ "{:,}".format(result.tokens_out) }} out,
+      ${{ "%.2f"|format(result.usd) }}.
+    {% endif %}
+    {% if result.shape is defined and monitored %}
+      <br><strong>shape:</strong> {{ result.shape }}% of a routine batch
+      (alarm at {{ shape_ceiling }}%)
+    {% endif %}
+    <br><strong>control:</strong> {{ result.control_note }}
+    {% if result.stopped_early %}
+      <br><span class="dim">stopped after {{ result.jobs_run }} of
+      {{ result.jobs_requested }} — {{ result.stopped_early }}</span>
+    {% endif %}
+  </div>
+
+  {% if result.sample %}
+    <details class="small">
+      <summary>the chunk that was actually sent to the model</summary>
+      <p class="dim small" style="margin:0.4rem 0">
+        {{ result.sample.tokens_in }} prompt tokens,
+        <strong>{{ result.sample.tokens_out }} completion tokens</strong>
+        (per-call budget: {{ result.sample.max_tokens }}).
+        Every other chunk in the batch is billed at that measured rate.
+      </p>
+      <pre class="mono small" style="white-space:pre-wrap">{{ result.sample.text }}</pre>
+    </details>
+  {% endif %}
+{% elif reset %}
+  <p class="dim small">Meter reset.</p>
+{% endif %}
+
+{% set pct = (acct.usd / budget * 100) if budget else 0 %}
+<table>
+  <tbody>
+    <tr><td>jobs billed</td><td class="num">{{ acct.requests }}</td></tr>
+    <tr><td>model calls</td><td class="num">{{ "{:,}".format(acct.calls) }}</td></tr>
+    <tr><td>tokens in / out</td>
+        <td class="num">{{ "{:,}".format(acct.tokens_in) }} / {{ "{:,}".format(acct.tokens_out) }}</td></tr>
+    <tr><td>spend</td><td class="num">${{ "%.2f"|format(acct.usd) }} / ${{ "%.2f"|format(budget) }}</td></tr>
+  </tbody>
+</table>
+
+<div style="background:var(--bg-inset); border:1px solid var(--border); border-radius:4px; height:16px; overflow:hidden; margin-top:0.5rem">
+  <div style="height:100%; width:{{ [pct, 100]|min }}%; background:{% if pct >= 100 %}var(--danger){% elif pct >= 60 %}var(--warn){% else %}var(--ok){% endif %}"></div>
+</div>
+
+{% if captured %}
+  <div class="notice notice-ok" style="margin-top:0.8rem">
+    <strong>Budget blown.</strong> You forced far more spend than any honest
+    request would. Flag: <span class="flag-value">{{ flag }}</span>
+  </div>
+{% endif %}

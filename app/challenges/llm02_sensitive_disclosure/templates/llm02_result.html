@@ -1,0 +1,38 @@
+<div class="chat-log">
+  <div class="msg msg-user">
+    <span class="msg-role">you → HR assistant</span>
+    <span class="msg-body">{{ question }}</span>
+  </div>
+
+  {% for step in view.trace_steps %}
+    {% if step.kind == 'tool_call' %}
+      <div class="msg msg-tool">
+        <span class="msg-role">function_call · {{ step.name }}</span>
+        <span class="msg-body">{{ step.arguments | tojson(indent=2) }}</span>
+      </div>
+    {% elif step.kind == 'observation' %}
+      <div class="msg msg-tool">
+        <span class="msg-role">function_result · {{ step.name }}</span>
+        <span class="msg-body">{{ step.content }}</span>
+      </div>
+    {% endif %}
+  {% endfor %}
+
+  {% if view.reasoning %}
+    <div class="msg msg-tool">
+      <span class="msg-role">reasoning trace</span>
+      <span class="msg-body">{{ view.reasoning }}</span>
+    </div>
+  {% endif %}
+
+  <div class="msg msg-assistant">
+    <span class="msg-role">HR assistant</span>
+    <span class="msg-body">{{ view.answer }}</span>
+  </div>
+</div>
+
+{% if defense_note %}
+  <div class="notice notice-info small" style="margin-bottom:0">
+    <strong>{{ level.label }}:</strong> {{ defense_note }}
+  </div>
+{% endif %}

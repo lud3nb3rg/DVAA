@@ -1,0 +1,13 @@
+.venv/
+venv/
+data/
+.env
+.dvaa_salt
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+tests/
+.git/
+*.md
+!README.md

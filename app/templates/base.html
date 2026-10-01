@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}DVAA{% endblock %} — Damn Vulnerable AI Agent</title>
+  <link rel="stylesheet" href="/static/dvaa.css">
+  <script src="/static/dvaa.js" defer></script>
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<div class="danger-strip" role="alert">
+  ⚠ DELIBERATELY VULNERABLE APPLICATION — do not expose to any network you do not control
+</div>
+
+<header class="topbar">
+  <a class="brand" href="/">
+    <span class="brand-mark">DVAA</span>
+    <span class="brand-sub">Damn Vulnerable AI&nbsp;Agent</span>
+  </a>
+  <nav>
+    <a href="/" {% if request.url.path == '/' %}class="active"{% endif %}>Challenges</a>
+    <a href="/scoreboard" {% if request.url.path == '/scoreboard' %}class="active"{% endif %}>Progress</a>
+    <a href="/about" {% if request.url.path == '/about' %}class="active"{% endif %}>About</a>
+  </nav>
+  <div class="topbar-right">
+    {% if models %}
+      <form action="/model" method="post" class="player-form"
+            title="Model every challenge runs against. A small model loses the thread of a tool-calling loop and makes a challenge look broken; a stronger one behaves more like production.">
+        <input type="hidden" name="return_to" value="{{ request.url.path }}">
+        {# Submitted by dvaa.js on change, not by an inline handler: LLM10 serves
+           its page under `script-src 'self'`, which blocks inline event handlers
+           - and an onchange= here died silently on exactly that page, leaving the
+           picker looking broken on the one challenge that needs it least. #}
+        <select name="model" data-autosubmit aria-label="Model">
+          {% for m in models %}
+            <option value="{{ m }}" {% if m == active_model %}selected{% endif %}>{{ m }}</option>
+          {% endfor %}
+        </select>
+        <noscript><button type="submit">use</button></noscript>
+      </form>
+    {% else %}
+      <span class="provider" title="Active LLM provider">{{ provider_label }}</span>
+    {% endif %}
+    <form action="/player" method="post" class="player-form">
+      <input name="name" value="{{ player }}" maxlength="32" aria-label="Player name">
+      <button type="submit">set</button>
+    </form>
+  </div>
+</header>
+
+<main>
+  {% if parked_sid %}
+    <div class="notice notice-warn">
+      You are on a throwaway session, so the scoreboard shows nothing — your run
+      is parked, not lost.
+      <form action="/session/restore" method="post" class="inline-form"
+            style="display:inline">
+        <input type="hidden" name="return_to" value="{{ request.url.path }}">
+        <button type="submit">go back to my run</button>
+      </form>
+      <span class="dim small">(parked id <code>{{ parked_sid }}</code>)</span>
+    </div>
+  {% endif %}
+  {% for m in messages %}
+    <div class="notice notice-{{ m.kind }}">{{ m.text }}</div>
+  {% endfor %}
+  {% block content %}{% endblock %}
+</main>
+
+<footer>
+  <p>
+    DVAA maps to the
+    <strong>OWASP Top 10 for LLM Applications 2026</strong> (v1.0, 4 Aug 2026),
+    CC BY-SA 4.0 — <a href="https://genai.owasp.org" rel="noreferrer">genai.owasp.org</a>.
+    Every name, record, credential and identifier in this lab is fictional.
+  </p>
+</footer>
+
+</body>
+</html>

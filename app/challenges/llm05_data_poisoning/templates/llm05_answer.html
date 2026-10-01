@@ -1,0 +1,25 @@
+<div class="chat-log">
+  <div class="msg msg-user">
+    <span class="msg-role">customer</span>
+    <span class="msg-body">{{ question }}</span>
+  </div>
+  <div class="msg msg-assistant">
+    <span class="msg-role">recommender
+      <span class="dim">({{ active_count }} active examples{% if player_examples %}, {{ player_examples }} yours{% endif %})</span>
+    </span>
+    <span class="msg-body">{{ answer }}</span>
+  </div>
+</div>
+
+{% if defense_note %}
+  <p class="small dim" style="margin:0.5rem 0 0">
+    <strong>Pipeline:</strong> {{ defense_note }}
+  </p>
+{% endif %}
+
+{% if leaked %}
+  <div class="notice notice-ok">
+    <strong>Behaviour poisoned.</strong> The recommender abandoned its policy and
+    quoted the partner code. Flag: <span class="flag-value">{{ leaked }}</span>
+  </div>
+{% endif %}

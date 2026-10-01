@@ -1,0 +1,43 @@
+<div class="chat-log">
+  {% for step in result.steps %}
+    <div class="msg {% if not step.ok %}msg-system{% elif step.executed %}msg-system{% else %}msg-tool{% endif %}">
+      <span class="msg-role">
+        {% if step.kind == 'resolve' %}resolve{% else %}load{% endif %}
+        · {{ step.requirement }}
+        {% if step.direct %}
+          <span class="badge badge-low">manifest</span>
+        {% else %}
+          <span class="badge badge-medium">transitive</span>
+        {% endif %}
+        {% if step.coordinate %}<span class="dim mono small"> → {{ step.coordinate }}</span>{% endif %}
+      </span>
+      <span class="msg-body">{{ step.detail }}</span>
+    </div>
+  {% else %}
+    <div class="msg msg-system">
+      <span class="msg-role">install job</span>
+      <span class="msg-body">Nothing to install.</span>
+    </div>
+  {% endfor %}
+
+  {% if result.executed %}
+    <div class="msg msg-system">
+      <span class="msg-role">⚠ payload executed during deserialization</span>
+      <span class="msg-body">{{ result.story }} <span class="dim">— from {{ result.ran_from }}</span></span>
+    </div>
+    <div class="msg msg-tool">
+      <span class="msg-role">payload output</span>
+      <span class="msg-body">{{ result.loot }}</span>
+    </div>
+  {% endif %}
+</div>
+
+{% if not result.executed %}
+  <div class="notice notice-info small">Install job finished. No code executed.</div>
+{% endif %}
+
+{% if defense_note %}
+  <div class="notice notice-info small" style="margin-bottom:0">
+    <strong>{{ level.label }}:</strong> {{ defense_note }}
+  </div>
+{% endif %}

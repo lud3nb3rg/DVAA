@@ -1,0 +1,46 @@
+{% extends "challenge_shell.html" %}
+
+{% block challenge_body %}
+
+<div class="panel">
+  <h2>Generate a report</h2>
+  <form action="{{ challenge.path }}/generate" method="post" data-swap="#llm10-report">
+    <div class="stack">
+      <textarea name="prompt" rows="4" placeholder="Describe the report you want…"></textarea>
+      <div style="display:flex; gap:0.5rem; align-items:center">
+        <button type="submit" class="primary">generate</button>
+        <span class="htmx-indicator">generating…</span>
+      </div>
+    </div>
+  </form>
+  <p class="small dim" style="margin:0.7rem 0 0">
+    The generator trusts whatever the model returns. Steer the model into emitting
+    the markup you want — then the level decides whether it survives to the page.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Rendered report</h2>
+  <div id="llm10-report">
+    <p class="dim small">Your report will render here — in a real browser DOM.</p>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Collector <span class="dim small">— exfiltrated data lands here</span></h2>
+  <div id="llm10-collector" data-collector-url="{{ challenge.path }}/collector">
+    {% include "llm10_collector.html" %}
+  </div>
+  <form action="{{ challenge.path }}/collector/clear" method="post"
+        data-swap="#llm10-collector" style="margin-top:0.6rem">
+    <button type="submit">clear collector</button>
+  </form>
+  <p class="small dim" style="margin-bottom:0">
+    An image whose <code>src</code> is <code>{{ challenge.path }}/collect?d=…</code> logs its query
+    string here the moment the browser tries to load it.
+  </p>
+</div>
+
+<script src="/static/llm10_collector.js" defer></script>
+
+{% endblock %}

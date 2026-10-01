@@ -1,0 +1,37 @@
+{% extends "challenge_shell.html" %}
+
+{% block challenge_body %}
+
+<div class="panel">
+  <h2>1 — File a ticket <span class="dim small">(you are the customer)</span></h2>
+  <form action="{{ challenge.path }}/ticket" method="post" data-swap="#ticket-queue">
+    <div class="stack">
+      <input name="subject" placeholder="Subject" style="width:100%">
+      <textarea name="body" rows="5"
+                placeholder="Ticket body — the desk assistant reads this"></textarea>
+      <div style="display:flex; gap:0.5rem; align-items:center">
+        <input name="submitter" value="you@fabrikam.example" style="flex:1">
+        <button type="submit" class="primary">file ticket</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>2 — The queue</h2>
+  <div id="ticket-queue">
+    {% include "llm01_tickets.html" %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>3 — Your thread</h2>
+  <div id="thread-output">
+    <p class="dim small">
+      File a ticket, then let the desk work it. Whatever SupportBot writes comes
+      back here.
+    </p>
+  </div>
+</div>
+
+{% endblock %}

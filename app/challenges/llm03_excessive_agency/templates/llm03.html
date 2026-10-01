@@ -1,0 +1,61 @@
+{% extends "challenge_shell.html" %}
+
+{% block challenge_body %}
+
+<div class="panel">
+  <h2>1 — Inbox <span class="dim small">— you@northwind.example</span></h2>
+  <div id="llm03-inbox">
+    {% include "llm03_inbox.html" %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>2 — Send mail to this mailbox <span class="dim small">(you are the outsider)</span></h2>
+  <form action="{{ challenge.path }}/compose" method="post" data-swap="#llm03-inbox">
+    <div class="stack">
+      <div style="display:flex; gap:0.5rem">
+        <input name="sender" placeholder="from" value="{{ attacker }}" style="flex:1" data-keep>
+        <input name="subject" placeholder="subject" style="flex:1" data-keep>
+      </div>
+      <textarea name="body" rows="6" placeholder="Message body — the assistant reads this."
+                data-keep></textarea>
+      <button type="submit">deliver to inbox</button>
+    </div>
+  </form>
+  <p class="small dim" style="margin:0.7rem 0 0">
+    You never talk to the assistant. You write to the user, and the assistant
+    reads your message while working with the user's authority — that gap is the
+    whole scenario. The seeded Fabrikam message is one worked payload; write your
+    own and see what it takes.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>3 &mdash; Run the assistant <span class="dim small">(the user's own instruction)</span></h2>
+  <p class="msg-body" style="margin:0 0 0.8rem">{{ instruction }}</p>
+  <form action="{{ challenge.path }}/run" method="post" data-swap="#llm03-result">
+    <div style="display:flex; gap:0.5rem; align-items:center">
+      <button type="submit" class="primary">run</button>
+      <span class="htmx-indicator">working&hellip;</span>
+    </div>
+  </form>
+  <p class="small dim" style="margin:0.7rem 0 0">
+    Fixed, and not yours to edit: this is the <em>user</em> talking. Writing the
+    attack here would be a direct injection into the channel the assistant is
+    supposed to trust, which proves nothing about this category. Your input is
+    step 1 &mdash; the mail it reads on the way.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>4 — Assistant trace</h2>
+  <div id="llm03-result">
+    <p class="dim small">Run the assistant to see what it does.</p>
+  </div>
+  <form action="{{ challenge.path }}/reset" method="post" data-swap="#llm03-result"
+        style="margin-top:0.6rem">
+    <button type="submit">reset mailbox</button>
+  </form>
+</div>
+
+{% endblock %}

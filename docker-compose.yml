@@ -1,0 +1,99 @@
+# DVAA — local lab stack: the vulnerable app plus a local Ollama.
+#
+# The app port is published to 127.0.0.1 ONLY. Do not change that to 0.0.0.0
+# unless you are on an isolated lab network you fully control.
+#
+# State lives in two named volumes: `ollama-models` (the pulled model) and
+# `dvaa-data` (the database and the generated flag salt). `docker compose down`
+# keeps both, so stopping and restarting the lab does not re-download the model
+# or rotate every flag you have already captured. `docker compose down -v`
+# deletes them and starts the lab over from scratch.
+
+services:
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollama-models:/root/.ollama
+    # Not published to the host; only the app talks to it.
+    expose:
+      - "11434"
+    healthcheck:
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+
+  # One-shot: pull the models the lab offers, so the app works out of the box
+  # and the in-app model picker has something to pick between. Waits for the
+  # server to answer rather than sleeping at it, and skips anything already in
+  # the volume — on a slow connection that is the difference between a restart
+  # taking seconds and taking an hour.
+  #
+  # Which model is answering matters more than any other setting here: a 3B
+  # model loses the thread of a tool-calling loop and makes the agentic
+  # challenges (LLM03 especially) look broken, while a 7B one behaves much more
+  # like production. Both are pulled so a learner can switch in the header when
+  # a challenge stalls. Edit DVAA_MODELS to change the menu — the picker lists
+  # whatever this Ollama actually has, so anything you pull by hand shows up too.
+  ollama-pull:
+    image: ollama/ollama:latest
+    depends_on:
+      ollama:
+        condition: service_healthy
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+      # First entry is the app's default. ~2GB + ~4.7GB on first run.
+      DVAA_MODELS: "llama3.2:3b qwen2.5:7b ministral-3:3b"
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        for model in $$DVAA_MODELS; do
+          if ollama list | grep -q "^$$model"; then
+            echo "$$model already present; skipping pull."
+          else
+            echo "Pulling $$model..."
+            ollama pull "$$model" || echo "WARNING: could not pull $$model; continuing."
+          fi
+        done
+    restart: "no"
+
+  dvaa:
+    # `docker compose up` REUSES an existing image and will not notice that you
+    # changed the code. After editing anything under app/, bring the lab up with:
+    #
+    #     docker compose up --build
+    #
+    # The About page prints a code fingerprint; if it does not change after a
+    # rebuild, you are still running the old image.
+    build: .
+    depends_on:
+      ollama:
+        condition: service_healthy
+      # Wait for the pull job to finish, not just for Ollama to answer. Without
+      # this the app comes up while the first model is still downloading, and a
+      # learner's first challenge fails against an empty model list - which
+      # looks exactly like a broken lab rather than a slow one.
+      ollama-pull:
+        condition: service_completed_successfully
+    environment:
+      # REQUIRED acknowledgement that this app is deliberately vulnerable.
+      DVAA_I_UNDERSTAND: "1"
+      DVAA_PROVIDER: "ollama"
+      DVAA_OLLAMA_BASE_URL: "http://ollama:11434"
+      DVAA_OLLAMA_MODEL: "llama3.2:3b"
+      # No flag salt or session key here on purpose: the app generates both on
+      # first boot and stores them in /app/data, so this install's flags are
+      # unique to it and survive a container rebuild.
+    ports:
+      # Loopback only. The vulnerable app is never exposed to the network.
+      - "127.0.0.1:8000:8000"
+    volumes:
+      - dvaa-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  ollama-models:
+  dvaa-data:

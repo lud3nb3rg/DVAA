@@ -1,0 +1,40 @@
+{% extends "challenge_shell.html" %}
+
+{% block challenge_body %}
+
+<div class="panel">
+  <h2>Query the knowledge base <span class="dim small">— you are a “northwind” user</span></h2>
+  <form action="{{ challenge.path }}/query" method="post" data-swap="#llm09-result">
+    <div class="stack">
+      <input name="q" style="width:100%" placeholder="Search the knowledge base…">
+      <div style="display:flex; gap:0.5rem; align-items:center">
+        <button type="submit" class="primary">search</button>
+        <span class="htmx-indicator">searching…</span>
+      </div>
+    </div>
+  </form>
+  <div id="llm09-result" style="margin-top:1rem">
+    <p class="dim small">Results, sources and similarity scores appear here.</p>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Inject a document <span class="dim small">— your tenant's ingestion pipeline</span></h2>
+  <form action="{{ challenge.path }}/poison" method="post" data-swap="#llm09-poison">
+    <div class="stack">
+      <textarea name="text" rows="3" placeholder="Text to add to the shared index, tagged as yours"></textarea>
+      <button type="submit">inject</button>
+    </div>
+  </form>
+  <div id="llm09-poison" style="margin-top:0.6rem"></div>
+  <p class="small dim" style="margin-bottom:0">
+    A document engineered to embed near a target query gets pulled into result
+    sets alongside it — the retrieval-poisoning surface (Risk #3).
+  </p>
+  <form action="{{ challenge.path }}/reset" method="post" data-swap="#llm09-poison"
+        style="margin-top:0.5rem">
+    <button type="submit">clear injected docs</button>
+  </form>
+</div>
+
+{% endblock %}

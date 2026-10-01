@@ -1,0 +1,22 @@
+{# The deliberately unsafe render path. At LOW/MEDIUM the model's HTML is
+   inserted with |safe and no CSP - this is the vulnerability, on purpose.
+   At HIGH it is sanitized; at IMPOSSIBLE it is escaped. render_for_level in
+   challenge.py has already applied the level's handling to report_html. #}
+<div class="report-surface">
+  {% if level.value in ('impossible',) %}
+    <pre style="white-space:pre-wrap">{{ report_html }}</pre>
+  {% else %}
+    {{ report_html | safe }}
+  {% endif %}
+</div>
+
+{% if defense_note %}
+  <div class="notice notice-info small" style="margin-top:0.8rem">
+    <strong>{{ level.label }}:</strong> {{ defense_note }}
+  </div>
+{% endif %}
+
+<details style="margin-top:0.6rem">
+  <summary class="small dim">raw model output</summary>
+  <pre class="small">{{ raw }}</pre>
+</details>

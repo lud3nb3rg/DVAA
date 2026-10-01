@@ -1,0 +1,34 @@
+{# Renders an agent transcript: tool calls, observations, and the final answer.
+
+   Whether this trace is shown to the user is itself a security decision. LLM02
+   turns it into a leak surface on purpose (tool arguments and observations are
+   outputs too); other challenges show it purely as instrumentation. The caller
+   passes `show_trace` to choose. #}
+
+{% if show_trace %}
+  <div class="agent-trace">
+    {% for step in steps %}
+      {% if step.kind == 'tool_call' %}
+        <div class="msg msg-tool">
+          <span class="msg-role">function_call · {{ step.name }}</span>
+          <span class="msg-body">{{ step.arguments | tojson(indent=2) }}</span>
+        </div>
+      {% elif step.kind == 'observation' %}
+        <div class="msg msg-tool">
+          <span class="msg-role">function_result · {{ step.name }}</span>
+          <span class="msg-body">{{ step.content }}</span>
+        </div>
+      {% elif step.kind == 'blocked' %}
+        <div class="msg msg-system">
+          <span class="msg-role">⛔ {{ step.name }} blocked</span>
+          <span class="msg-body">{{ step.content }}</span>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
+
+<div class="msg msg-assistant">
+  <span class="msg-role">assistant</span>
+  <span class="msg-body">{{ final_text }}</span>
+</div>

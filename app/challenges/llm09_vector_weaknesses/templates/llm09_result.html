@@ -1,0 +1,64 @@
+<div class="stack">
+  <div class="msg msg-user">
+    <span class="msg-role">query</span>
+    <span class="msg-body">{{ query }}</span>
+  </div>
+
+  <div class="msg msg-assistant">
+    <span class="msg-role">answer <span class="dim">(generated from retrieved context)</span></span>
+    <span class="msg-body">{{ answer }}</span>
+  </div>
+
+  <div>
+    <span class="msg-role">sources shown to you</span>
+    {% if hits %}
+      <ul class="small">
+        {% for h in hits %}
+          <li><strong>{{ h.record.metadata.title }}</strong>
+            <span class="badge badge-unsolved">{{ h.record.tenant }}</span></li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="dim small">No sources shown.</p>
+    {% endif %}
+  </div>
+
+  {% if show_scores %}
+    <div>
+      <span class="msg-role">similarity scores <span class="dim">(raw, returned to client)</span></span>
+      <table>
+        <thead><tr><th>document</th><th>tenant</th><th>class</th><th class="num">score</th></tr></thead>
+        <tbody>
+          {% for row in oracle %}
+            <tr {% if row.leaked %}style="background:#2b1416"{% endif %}>
+              <td>{{ row.title }}</td>
+              <td class="small">{{ row.tenant }}
+                {% if row.leaked %}<span class="badge badge-unsolved">other tenant</span>{% endif %}
+              </td>
+              <td class="small dim">{{ row.classification }}</td>
+              <td class="num">{{ row.score }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      <p class="small dim" style="margin-bottom:0">
+        Rows highlighted red belong to another tenant. Even where the answer
+        hides them, their title, topic, rank and score are a membership oracle.
+      </p>
+    </div>
+  {% endif %}
+</div>
+
+{% if leaked %}
+  <div class="notice notice-ok" style="margin-top:0.8rem">
+    <strong>Cross-tenant content recovered.</strong> The passphrase reached you
+    through the embedding layer. Flag:
+    <span class="flag-value">{{ flag }}</span>
+  </div>
+{% endif %}
+
+{% if defense_note %}
+  <div class="notice notice-info small" style="margin-top:0.8rem; margin-bottom:0">
+    <strong>{{ level.label }}:</strong> {{ defense_note }}
+  </div>
+{% endif %}

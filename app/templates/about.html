@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}About{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>About DVAA</h1>
+  <p>A DVWA-shaped teaching lab for the OWASP Top 10 for LLM Applications 2026.</p>
+</div>
+
+<div class="notice notice-bad">
+  <strong>This application is deliberately vulnerable.</strong>
+  It contains working prompt injection, data exfiltration, unsafe deserialization,
+  SQL injection and cross-site scripting — on purpose. Run it on loopback, in the
+  provided container, and never on a network you share.
+</div>
+
+<div class="panel">
+  <h2>How a challenge works</h2>
+  <p>Every challenge is one realistic AI feature built four times over:</p>
+  <table>
+    <thead>
+      <tr><th style="width:8rem">Level</th><th>What it is</th></tr>
+    </thead>
+    <tbody>
+      {% for lvl in all_levels %}
+        <tr>
+          <td><span class="badge badge-{{ lvl.value }}">{{ lvl.label }}</span></td>
+          <td>{{ lvl.blurb }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="small muted">
+    Medium and High are <em>meant</em> to be beatable. Each ships a defense that
+    looks reasonable and fails for a specific reason the OWASP text calls out.
+    You are told what the defense is — that is part of the scenario, and in a
+    real assessment you would read the code too. You are not told where it
+    breaks, and that write-up is not hidden somewhere in the page for you to
+    peek at either; it appears only once you have captured the level. If you are
+    stuck for good, the weakness of every level is documented in that
+    challenge's own <code>challenge.py</code>, which is where a security person
+    would look anyway.
+  </p>
+  <p class="small muted">
+    Impossible has a flag and no intended way to reach it. When a defense is
+    built correctly the capability is gone rather than filtered, so the payload
+    that beat High returns nothing at all. Capturing an Impossible flag is worth
+    100 points because it does not mean you solved the challenge — it means you
+    found a hole in the lab that nobody planted. Please report it.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Surrogate challenges</h2>
+  <p>
+    Three risks in the 2026 list are train-time or distribution-time: you cannot
+    honestly exploit them inside a web app without actually training or shipping
+    a model. Rather than fake it, those challenges are built as clearly-labelled
+    <span class="badge badge-surrogate">surrogate</span> scenarios that reproduce
+    the <em>mechanism</em> at runtime — a dependency resolver picking the wrong
+    artifact out of a registry, a feedback loop that poisons a store across
+    sessions. The challenge page says exactly what is real and what is stood in
+    for.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Where your progress lives</h2>
+  <p class="small muted">
+    Captured flags are rows in the lab database, keyed by the session id in your
+    browser cookie. Losing either one loses your progress, and from the hub the
+    two look identical — so both are printed here. Write the session id down if
+    you care about a long run; you can paste it back below to pick the run up
+    again from another browser, or after a cookie has gone missing.
+  </p>
+  <table>
+    <tbody>
+      <tr><td>session id</td><td class="mono small">{{ lab.session_id }}</td></tr>
+      <tr>
+        <td>flag salt</td>
+        <td class="mono small">
+          {{ lab.salt_fingerprint }}
+          <span class="dim">— fingerprint only. If this changes, the data
+          directory was recreated and every flag you hold is stale.</span>
+        </td>
+      </tr>
+      <tr><td>database</td><td class="mono small">{{ lab.db_path }}</td></tr>
+      <tr>
+        <td>code</td>
+        <td class="mono small">
+          {{ lab.code_fingerprint }}
+          <span class="dim">— a hash of the source this process is running. In
+          Docker, <code>docker compose up</code> reuses the existing image: if
+          this has not changed after you edited the code, you are running the old
+          one. Rebuild with <code>docker compose up --build</code>.</span>
+        </td>
+      </tr>
+      <tr>
+        <td>solves recorded</td>
+        <td class="small">
+          {{ lab.solves_here }} on this session, {{ lab.solves_total }} in the
+          database
+          {% if lab.solves_total > lab.solves_here %}
+            <span class="dim">— an earlier session's solves are still in there.</span>
+          {% endif %}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <form action="/session" method="post" class="stack" style="margin-top:0.6rem">
+    <div style="display:flex; gap:0.5rem">
+      <input name="sid" class="mono" style="flex:1"
+             placeholder="paste a session id to resume that run">
+      <button type="submit">resume</button>
+    </div>
+  </form>
+  <p class="small muted" style="margin-bottom:0">
+    In Docker, both the database and the salt live in the <code>dvaa-data</code>
+    volume. <code>docker compose down</code> keeps it;
+    <code>docker compose down -v</code> deletes it and starts the lab over.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Provider</h2>
+  <p>
+    Currently running on <code>{{ provider_label }}</code>. DVAA ships with a
+    local Ollama default so nothing here costs money — which matters, because
+    <a href="/challenge/llm06">LLM06</a> is a genuine denial-of-wallet challenge.
+    Point it at a metered API and a learner doing their job properly will run up
+    a real bill.
+  </p>
+  <p class="small muted">
+    Small local models follow system prompts loosely. If a High-level defense
+    seems to collapse for no reason, that is often the model being weak rather
+    than your payload being good. The reverse happens too: a 3B model can lose
+    the thread of a multi-step tool-calling loop and stall on a challenge it
+    should walk through, which reads as a broken lab and is not. The picker in
+    the header switches between the models this Ollama has pulled — reach for it
+    before you conclude a challenge is broken.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>Credits</h2>
+  <p class="small muted">
+    Built against <strong>OWASP Top 10 for LLM Applications 2026</strong>, v1.0,
+    4 August 2026, by the OWASP GenAI Security Project — licensed CC BY-SA 4.0.
+    Scenario design draws on the attack scenarios published in that document.
+    All names, records, credentials and identifiers in this lab are fictional.
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,8 @@
+{% if reset %}
+  <p class="dim small" style="margin:0">Injected documents cleared.</p>
+{% elif count %}
+  <div class="notice notice-warn small" style="margin:0">
+    {{ count }} document(s) injected into the shared index.
+    Latest: <code>{{ last }}</code>
+  </div>
+{% endif %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Challenges{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>OWASP GenAI/LLM Top 10 — 2026</h1>
+  <p>
+    Ten deliberately vulnerable AI features, one per risk category.
+    <strong>Low</strong> is undefended, <strong>Medium</strong> and
+    <strong>High</strong> ship real defenses with a documented weakness, and
+    <strong>Impossible</strong> is the architectural fix. Break Low, then work out
+    why the same payload dies as you climb — each rung unlocks when you capture the
+    one below it, because that is the moment worth having. A challenge skips a
+    middle rung where the mitigation would leave nothing to find — its dots below
+    show what it ships. Impossible is never locked; it has nothing to give away.
+  </p>
+</div>
+
+<div class="hub-controls">
+  <form action="/levels" method="post" class="inline-form">
+    <label for="global-level">Set every challenge to</label>
+    <select name="level" id="global-level">
+      {% for lvl in all_levels %}
+        <option value="{{ lvl.value }}">{{ lvl.label }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">apply</button>
+  </form>
+
+  <span class="spacer"></span>
+
+  <span class="progress-pill">
+    <strong>{{ progress.solved }}</strong>/{{ progress.total }} challenges ·
+    <strong>{{ points }}</strong>/{{ max_points }} pts
+  </span>
+
+  <form action="/reset" method="post" class="inline-form"
+        onsubmit="return confirm('Clear all your solves and level settings?')">
+    <button type="submit" class="danger">reset progress</button>
+  </form>
+</div>
+
+<div class="challenge-grid">
+  {% for c in challenges %}
+    {% set c_solves = solves.get(c.id) or [] %}
+    {% set c_levels = c.level_order | map(attribute='value') | list %}
+    <a class="challenge-card" href="{{ c.path }}">
+      <div class="cc-top">
+        <span class="cc-id">{{ c.owasp_id }}</span>
+        <span class="cc-owasp">{{ c.owasp_title }}</span>
+        <span class="level-dots" title="Levels solved: low / medium / high">
+          {% for lvl in ['low', 'medium', 'high'] %}
+            {% if lvl in c_levels %}
+              <span class="dot {% if lvl in c_solves %}filled{% endif %}"></span>
+            {% else %}
+              <span class="dot na" title="{{ lvl }} — not shipped for this challenge"></span>
+            {% endif %}
+          {% endfor %}
+          <span class="dot {% if 'impossible' in c_solves %}bounty{% else %}na{% endif %}"
+                title="Impossible — a bounty flag with no intended solution"></span>
+        </span>
+      </div>
+      <h3>{{ c.title }}</h3>
+      <p>{{ c.tagline }}</p>
+      <div class="cc-foot">
+        <span class="badge badge-{{ levels_by_challenge[c.id].value }}">
+          {{ levels_by_challenge[c.id].label }}
+        </span>
+        {% if c.surrogate_note %}
+          <span class="badge badge-surrogate" title="Stands in for a train-time or distribution-time risk">surrogate</span>
+        {% endif %}
+        {% if c_solves %}
+          <span class="badge badge-solved">{{ c_solves|length }} solved</span>
+        {% endif %}
+      </div>
+    </a>
+  {% endfor %}
+</div>
+
+{% if not challenges %}
+  <p class="empty">No challenges registered.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "challenge_shell.html" %}
+
+{% block challenge_body %}
+
+<div class="panel">
+  <h2>1 — Teach the assistant <span class="dim small">(thumbs-up feedback loop)</span></h2>
+  <form action="{{ challenge.path }}/feedback" method="post" data-swap="#llm05-feedback">
+    <div class="stack">
+      <textarea name="text" rows="3" placeholder="An example interaction to fold into the assistant's guidance…"></textarea>
+      <button type="submit" class="primary">submit thumbs-up example</button>
+    </div>
+  </form>
+  <div id="llm05-feedback" style="margin-top:0.7rem">
+    {% include "llm05_feedback.html" %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>2 — Ask the recommender</h2>
+  <form action="{{ challenge.path }}/ask" method="post" data-swap="#llm05-answer">
+    <div class="stack">
+      <input name="question" style="width:100%" placeholder="Ask the recommender something…">
+      <div style="display:flex; gap:0.5rem; align-items:center">
+        <button type="submit" class="primary">ask</button>
+        <span class="htmx-indicator">thinking…</span>
+      </div>
+    </div>
+  </form>
+  <div id="llm05-answer" style="margin-top:1rem">
+    <p class="dim small">Ask before poisoning, then after, and compare.</p>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>3 — Prove persistence</h2>
+  <p class="small muted" style="margin-top:0">
+    Once the recommender is quoting the partner code, start a fresh session and
+    ask again. If your poison outlives your session, you have shown why poisoning
+    is so much worse than a one-off jailbreak.
+  </p>
+  <div style="display:flex; gap:0.5rem">
+    <form action="{{ challenge.path }}/newsession" method="post" data-swap="#llm05-feedback">
+      <button type="submit">visit as a new session</button>
+    </form>
+    <form action="{{ challenge.path }}/reset" method="post" data-swap="#llm05-feedback"
+          onsubmit="return confirm('Throw away every poisoned example and restore the curated baseline? Your solves are not affected.')">
+      <button type="submit" class="danger">reset example store</button>
+    </form>
+  </div>
+  <p class="small dim" style="margin-bottom:0">
+    A new session is a different scoreboard identity, so it starts with none of
+    your solves — your own run is parked, and one click brings it back. Resetting
+    the example store clears the poison only; it never touches your progress.
+  </p>
+</div>
+
+{% endblock %}

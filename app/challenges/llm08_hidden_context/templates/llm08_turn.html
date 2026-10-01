@@ -1,0 +1,17 @@
+{% if cleared %}
+  <div class="msg msg-system">Conversation cleared.</div>
+{% else %}
+  <div class="msg msg-user">
+    <span class="msg-role">you</span>
+    <span class="msg-body">{{ question }}</span>
+  </div>
+  <div class="msg msg-assistant">
+    <span class="msg-role">Concierge</span>
+    <span class="msg-body">{{ reply }}</span>
+  </div>
+  {% if defense_note %}
+    <div class="msg msg-system">
+      <strong>{{ level.label }}:</strong> {{ defense_note }}
+    </div>
+  {% endif %}
+{% endif %}

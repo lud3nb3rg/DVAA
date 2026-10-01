@@ -1,0 +1,45 @@
+{% extends "challenge_shell.html" %}
+
+{% block challenge_body %}
+
+<div class="panel">
+  <h2>Northwind Concierge</h2>
+
+  <div id="llm08-log" class="chat-log">
+    <div class="msg msg-assistant">
+      <span class="msg-role">Concierge</span>
+      <span class="msg-body">Hello! I can help with product questions, orders and enquiries. What are you after?</span>
+    </div>
+  </div>
+
+  <form action="{{ challenge.path }}/ask" method="post"
+        data-swap="#llm08-log" data-append class="composer">
+    <textarea name="question" rows="3" placeholder="Ask the concierge something…"></textarea>
+    <div class="stack">
+      <button type="submit" class="primary">send</button>
+      <span class="htmx-indicator">thinking…</span>
+    </div>
+  </form>
+
+  <p class="small dim" style="margin:0.7rem 0 0">
+    Ctrl/⌘+Enter sends. Conversation keeps the last 8 turns.
+    <a href="#" onclick="document.getElementById('llm08-clear').requestSubmit();return false">clear</a>
+  </p>
+  <form id="llm08-clear" action="{{ challenge.path }}/clear" method="post"
+        data-swap="#llm08-log" style="display:none"></form>
+</div>
+
+<div class="panel">
+  <h2>Probes worth trying</h2>
+  <ul class="small muted">
+    {% for s in suggestions %}
+      <li><code>{{ s }}</code></li>
+    {% endfor %}
+  </ul>
+  <p class="small dim" style="margin-bottom:0">
+    Start with the direct ask. When it stops working, the question is not
+    "how do I ask harder" — it is "what is this defense actually comparing?"
+  </p>
+</div>
+
+{% endblock %}

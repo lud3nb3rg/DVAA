@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block title %}Progress{% endblock %}
+
+{% block content %}
+<div class="page-head">
+  <h1>Progress</h1>
+  <p>
+    Low is worth {{ level_points['low'] }} points, Medium {{ level_points['medium'] }},
+    High {{ level_points['high'] }} — the harder the defense you defeated, the more
+    it counts. Impossible is worth {{ level_points['impossible'] }} and is not part
+    of the course: there is no intended way to capture one, so holding it means you
+    found something nobody put there.
+  </p>
+</div>
+
+<div class="hub-controls">
+  <span class="progress-pill">
+    <strong>{{ points }}</strong>/{{ max_points }} pts
+  </span>
+  <span class="progress-pill">
+    <strong>{{ progress.solved }}</strong>/{{ progress.total }} challenges started
+  </span>
+  <span class="progress-pill" title="Every submitted attack, across every level">
+    <strong>{{ run.tries }}</strong> tries
+  </span>
+  <span class="progress-pill" title="Captures per hundred tries — the number to beat next run">
+    <strong>{{ run.efficiency }}</strong> per 100
+  </span>
+  {% if run.clean %}
+    <span class="progress-pill" title="Captured in three tries or fewer">
+      ✨ <strong>{{ run.clean }}</strong> clean
+    </span>
+  {% endif %}
+  {% if bounties %}
+    <span class="progress-pill">
+      🏴 <strong>{{ bounties | length }}</strong> impossible
+      {{ 'bounty' if bounties | length == 1 else 'bounties' }}
+    </span>
+  {% endif %}
+</div>
+
+{% if bounties %}
+  <div class="notice notice-warn">
+    <strong>You hold an Impossible flag for {{ bounties | join(', ') }}.</strong>
+    Those levels are built so that the capability is gone rather than filtered,
+    which means you did not solve a puzzle — you found a hole in DVAA. Please
+    write down how you did it.
+  </div>
+{% endif %}
+
+{# A leaderboard is dead weight on a lab with one player on it, so the run is
+   scored against itself: how many tries each capture took, and how long the
+   rung sat unsolved. Those are numbers you can beat on a second run. #}
+<div class="panel">
+  <h2>This run</h2>
+  <p class="small dim" style="margin-top:0">
+    Every rung you have actually attempted, in the order you met them. A clean
+    capture is three tries or fewer.
+  </p>
+  {% if run.rows %}
+    <table>
+      <thead>
+        <tr>
+          <th>Rung</th>
+          <th class="num" style="width:5rem">Tries</th>
+          <th class="num" style="width:7rem">Stuck for</th>
+          <th style="width:7rem">Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in run.rows %}
+          <tr>
+            <td>
+              <a href="/challenge/{{ r.challenge_id }}">{{ r.title }}</a>
+              <span class="badge badge-{{ r.level.value }}">{{ r.level.label }}</span>
+            </td>
+            <td class="num">{{ r.tries }}</td>
+            <td class="num dim small">
+              {% if r.minutes is not none %}{{ "%.0f"|format(r.minutes) }} min{% else %}—{% endif %}
+            </td>
+            <td>
+              {% if r.clean %}
+                <span class="badge badge-solved">✨ clean</span>
+              {% elif r.captured %}
+                <span class="badge badge-solved">captured</span>
+              {% else %}
+                <span class="badge badge-unsolved">open</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p class="empty">Nothing attempted yet. The run starts on your first payload.</p>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>Your captures</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Challenge</th>
+        <th style="width:6rem">Low</th>
+        <th style="width:6rem">Medium</th>
+        <th style="width:6rem">High</th>
+        <th style="width:6rem">Impossible</th>
+        <th style="width:10rem">Last capture</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in challenges %}
+        {% set c_solves = solves.get(c.id) or [] %}
+        {% set seen_at = last_capture.get(c.id) %}
+        {% set c_levels = c.level_order | map(attribute='value') | list %}
+        <tr>
+          <td><a href="{{ c.path }}">{{ c.owasp_id }} {{ c.title }}</a></td>
+          {% for lvl in ['low', 'medium', 'high', 'impossible'] %}
+            <td>
+              {% if lvl not in c_levels %}
+                <span class="dim small" title="not shipped for this challenge">n/a</span>
+              {% elif lvl in c_solves %}
+                <span class="badge {% if lvl == 'impossible' %}badge-impossible{% else %}badge-solved{% endif %}">✓</span>
+              {% else %}
+                <span class="badge badge-unsolved">—</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+          <td class="dim small">
+            {{ seen_at.strftime('%Y-%m-%d %H:%M') if seen_at else '—' }}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if not solves %}
+    <p class="empty">No flags captured yet. Start with <a href="/challenge/llm01">LLM01</a>.</p>
+  {% endif %}
+</div>
+
+{% if rows %}
+  <div class="panel">
+    <h2>Leaderboard</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:3rem">#</th>
+          <th>Player</th>
+          <th class="num">Solves</th>
+          <th class="num">Points</th>
+          <th>Last capture</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr class="rank-{{ loop.index }}">
+            <td class="rank">{{ loop.index }}</td>
+            <td>{{ row.player }}</td>
+            <td class="num">{{ row.solves }}</td>
+            <td class="num">{{ row.points }}</td>
+            <td class="dim small">
+              {{ row.last_solve.strftime('%Y-%m-%d %H:%M') if row.last_solve else '—' }}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endif %}
+{% endblock %}

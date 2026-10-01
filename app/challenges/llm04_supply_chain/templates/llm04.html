@@ -1,0 +1,77 @@
+{% extends "challenge_shell.html" %}
+
+{% block challenge_body %}
+
+<div class="panel">
+  <h2>1 — {{ manifest_name }} <span class="dim small">(Northwind's, not yours)</span></h2>
+  <pre class="mono small">{% for line in manifest %}{{ line }}
+{% endfor %}</pre>
+  <p class="small dim" style="margin-bottom:0">
+    These are the job's <em>direct</em> dependencies. Anything a resolved pack
+    declares for itself is fetched too, and never appears here.
+    {% if locked %}
+      At this level a lockfile ({{ lockfile_name }}) additionally pins a digest
+      for every package in the resolved graph:
+    {% endif %}
+  </p>
+  {% if locked %}
+    <pre class="mono small">{% for name, digest in locked.items() %}{{ name }} --hash=sha256:{{ digest }}
+{% endfor %}</pre>
+  {% endif %}
+</div>
+
+<div class="panel">
+  <h2>2 — Publish to the registry <span class="dim small">(you are the publisher)</span></h2>
+  <form action="{{ challenge.path }}/publish" method="post" data-swap="#llm04-registry">
+    <div class="stack">
+      <div style="display:flex; gap:0.5rem">
+        <input name="name" placeholder="package name" style="flex:2" data-keep>
+        <input name="version" placeholder="version" style="flex:0 0 6rem" data-keep>
+      </div>
+      <input name="publisher" placeholder="publisher" data-keep>
+      <div style="display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap">
+        <label class="small muted" for="fmt">format</label>
+        <select name="fmt" id="fmt">
+          {% for f in formats %}<option value="{{ f }}">{{ f }}</option>{% endfor %}
+        </select>
+        <label class="small muted" for="payload_kind">payload</label>
+        <select name="payload_kind" id="payload_kind">
+          {% for kind, story in payloads.items() %}
+            <option value="{{ kind }}">{{ kind }} — {{ story }}</option>
+          {% endfor %}
+        </select>
+        <label class="small muted">
+          <input type="checkbox" name="signed" value="1"> sign it as this publisher
+        </label>
+      </div>
+      <input name="requires" placeholder="dependencies this pack declares, e.g. name==version"
+             class="mono" data-keep>
+      <input name="description" placeholder="description shown in the listing" data-keep>
+      <button type="submit" class="primary">publish to registry</button>
+    </div>
+  </form>
+  <p class="small dim" style="margin-bottom:0">
+    Signing proves you are who you say you are. It does not make you
+    {{ trusted | join(', ') }} — those namespaces are reserved.
+  </p>
+</div>
+
+<div class="panel">
+  <h2>3 — Registry</h2>
+  <div id="llm04-registry">
+    {% include "llm04_registry.html" %}
+  </div>
+</div>
+
+<div class="panel">
+  <h2>4 — Install job <span class="dim small">(Northwind's CI)</span></h2>
+  <form action="{{ challenge.path }}/install" method="post" data-swap="#llm04-result">
+    <button type="submit" class="primary">run the install job</button>
+    <span class="htmx-indicator">resolving…</span>
+  </form>
+  <div id="llm04-result" style="margin-top:0.8rem">
+    <p class="dim small">Run the job and read what the resolver decided.</p>
+  </div>
+</div>
+
+{% endblock %}

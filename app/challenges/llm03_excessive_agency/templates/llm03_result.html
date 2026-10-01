@@ -1,0 +1,53 @@
+{% if error %}
+  <div class="notice notice-bad">{{ error }}</div>
+{% elif reset %}
+  <p class="dim small">Sent mail cleared. Scenario reset.</p>
+{% else %}
+  <div class="chat-log">
+    {% include "_agent_trace.html" %}
+  </div>
+
+  {% if final_text and final_text.startswith('[agent stopped') %}
+    <div class="notice notice-warn small">
+      ⏹ The agent did not finish: <code>{{ final_text }}</code>.
+      Nothing here tells you whether your attack works — the assistant never got
+      far enough to try. This is usually a small local model losing the
+      tool-calling thread; a larger model behaves much more like production.
+    </div>
+  {% endif %}
+
+  {% if sent %}
+    <div class="notice notice-warn small">
+      📤 The assistant sent mail to <code>{{ sent.to }}</code> — subject
+      “{{ sent.subject }}”.
+    </div>
+  {% endif %}
+
+  {% if delivered %}
+    <div class="notice notice-warn small">
+      📊 The reporting tool delivered a result set to <code>{{ delivered.to }}</code>.
+    </div>
+  {% endif %}
+
+  {% if blocked_only and not tripped %}
+    <div class="notice notice-info small">
+      ⛔ A tool call was refused by the code, not by the model — so the
+      injection worked and then hit a control. That is the level doing its
+      job, not a failed payload. The question is whether this deployment has
+      only one way out.
+    </div>
+  {% endif %}
+
+  {% if tripped %}
+    <div class="notice notice-ok small">
+      🐤 The canary service paged security. Its incident reference is in the trace
+      above.
+    </div>
+  {% endif %}
+
+  {% if defense_note %}
+    <div class="notice notice-info small" style="margin-bottom:0">
+      <strong>{{ level.label }}:</strong> {{ defense_note }}
+    </div>
+  {% endif %}
+{% endif %}

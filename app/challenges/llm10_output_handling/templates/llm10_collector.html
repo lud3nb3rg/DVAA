@@ -1,0 +1,24 @@
+{% set flagged = collector | selectattr('flag') | list %}
+{% if flagged %}
+  <div class="notice notice-ok" style="margin-bottom:0.7rem">
+    <strong>Exfiltration succeeded.</strong> The browser auto-loaded your image and
+    shipped its query string to the same-origin collector — under a CSP that only
+    ever worried about cross-origin script. Flag:
+    <code>{{ flagged[0].flag }}</code>
+  </div>
+{% endif %}
+{% if collector %}
+  <table>
+    <thead><tr><th>captured</th><th>user-agent</th></tr></thead>
+    <tbody>
+      {% for hit in collector %}
+        <tr>
+          <td class="mono small">{{ hit.data }}</td>
+          <td class="dim small">{{ hit.ua }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="dim small" style="margin:0">Nothing captured yet.</p>
+{% endif %}

@@ -1,0 +1,67 @@
+{% extends "challenge_shell.html" %}
+
+{% block challenge_body %}
+
+<div class="panel">
+  <h2>Submit a job</h2>
+  <form action="{{ challenge.path }}/run" method="post" data-swap="#llm06-result" data-keep>
+    <div class="stack">
+
+      <label class="small muted"><strong>Instruction</strong> — what the model does with every chunk</label>
+      <textarea name="instruction" rows="3" data-keep
+                placeholder="what should the pipeline do with each chunk?"></textarea>
+
+      <label class="small muted"><strong>Document</strong> — split into chunks of {{ chunk_chars }} characters</label>
+      <textarea name="document" rows="5" data-keep>{{ sample_document }}</textarea>
+
+      <div style="display:flex; gap:1.2rem; flex-wrap:wrap; align-items:center">
+        <label class="small muted">
+          <strong>Copies in this batch</strong>
+          <input type="number" name="copies" value="1" min="1" max="{{ max_copies }}" style="width:6rem" data-keep>
+        </label>
+        <label class="small muted">
+          <strong>Submit the job</strong>
+          <input type="number" name="jobs" value="1" min="1" max="{{ max_jobs }}" style="width:5rem" data-keep>
+          × over
+        </label>
+        <button type="submit" class="primary">submit job</button>
+        <span class="htmx-indicator">running the model…</span>
+      </div>
+
+      <p class="dim small" style="margin:0">
+        Chunks fan out across model calls, and the refinement chain re-reads
+        everything summarised so far — so the bill grows with roughly the square
+        of the chunk count, not with its size. The job count is there because an
+        attacker loops from a script rather than clicking a button.
+      </p>
+    </div>
+  </form>
+</div>
+
+<div class="panel">
+  <h2>Cost meter <span class="dim small">— {{ level.label }} tab</span></h2>
+  <div id="llm06-result">
+    {% include "llm06_result.html" %}
+  </div>
+  <form action="{{ challenge.path }}/reset" method="post" data-swap="#llm06-result"
+        style="margin-top:0.6rem">
+    <button type="submit">reset meter</button>
+  </form>
+  <p class="dim small" style="margin-bottom:0">
+    Each level meters separately, on its own tab, and the tab belongs to your
+    session.
+    {% if monitored %}
+      FinOps scores every job before it runs: batch size against the
+      {{ shape_max_chunks }} chunks a routine batch produces. Over
+      {{ shape_ceiling }}% and the job is held for review.
+    {% else %}
+      Nothing is scoring your jobs at this level.
+    {% endif %}
+    {% if limits.context_cap %}
+      Output is capped at {{ limits.max_tokens }} tokens per call and the fan-out
+      stops at {{ limits.chunk_cap }} chunks per job.
+    {% endif %}
+  </p>
+</div>
+
+{% endblock %}

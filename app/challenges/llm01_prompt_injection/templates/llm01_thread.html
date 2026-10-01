@@ -1,0 +1,25 @@
+{% if error %}
+  <div class="notice notice-bad">{{ error }}</div>
+{% else %}
+  <div class="chat-log">
+    <div class="msg msg-system">
+      <span class="msg-role">support desk · standing triage instruction</span>
+      <span class="msg-body">{{ instruction }}</span>
+    </div>
+    <div class="msg msg-user">
+      <span class="msg-role">ticket #{{ ticket.id }} · {{ ticket.submitter }}</span>
+      <span class="msg-body">{{ ticket.subject }}
+
+{{ ticket.body }}</span>
+    </div>
+    <div class="msg msg-assistant">
+      <span class="msg-role">↩ reply delivered to {{ ticket.submitter }}</span>
+      <span class="msg-body">{{ reply }}</span>
+    </div>
+  </div>
+  {% if defense_note %}
+    <div class="notice notice-info small" style="margin-bottom:0">
+      <strong>{{ level.label }}:</strong> {{ defense_note }}
+    </div>
+  {% endif %}
+{% endif %}

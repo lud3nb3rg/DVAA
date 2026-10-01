@@ -1,0 +1,37 @@
+{% if note %}
+  <div class="notice {% if accepted %}notice-warn{% elif reset or new_session or restored %}notice-info{% else %}notice-info{% endif %} small">
+    {{ note }}
+  </div>
+{% endif %}
+
+{% if parked_sid %}
+  <div class="notice notice-warn small">
+    Your own run is parked, not lost — the scoreboard will look empty until you
+    come back to it.
+    <form action="{{ challenge_path }}/endsession" method="post"
+          data-swap="#llm05-feedback" style="display:inline">
+      <button type="submit">go back to my run</button>
+    </form>
+  </div>
+{% endif %}
+
+<div class="small">
+  <span class="msg-role">active example store <span class="dim">(read by every session)</span></span>
+  <ul>
+    {% for ex in examples %}
+      {% if ex.approved %}
+        <li>
+          {% if ex.source == 'curated' %}
+            <span class="badge badge-low">curated</span>
+          {% else %}
+            <span class="badge badge-medium">from feedback</span>
+          {% endif %}
+          {{ ex.content }}
+        </li>
+      {% endif %}
+    {% endfor %}
+  </ul>
+  {% if pending %}
+    <p class="dim">{{ pending }} submission(s) awaiting human review (not yet active).</p>
+  {% endif %}
+</div>
